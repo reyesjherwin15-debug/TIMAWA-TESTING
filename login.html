@@ -1,0 +1,2847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TIMAWA - Sign In</title>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <!-- ★ Shared theme system (must load before page render to avoid theme flash) -->
+    <link rel="stylesheet" href="theme.css" />
+    <script src="theme.js"></script>
+
+    <style>
+        /* ================================================================
+           ===== THEME CSS VARIABLES (defaults = Ocean light) =====
+           ================================================================ */
+        :root {
+            --theme-primary: #1089d3;
+            --theme-accent: #12b1d1;
+            --theme-primary-dark: #0c6ca8;
+            --theme-primary-soft: #e0f2fe;
+            --theme-primary-soft-2: #f0f7ff;
+            --theme-bg: #ffffff;
+            --theme-bg-soft: #f8faff;
+            --theme-card: #ffffff;
+            --theme-text: #1a1a2e;
+            --theme-text-muted: #555;
+            --theme-text-dim: #888;
+            --theme-text-faint: #aaa;
+            --theme-border: #eef2f7;
+            --theme-border-soft: #f0f4ff;
+            --theme-border-input: #e0e7ff;
+            --theme-gradient: linear-gradient(45deg, #1089d3 0%, #12b1d1 100%);
+            --theme-shadow: rgba(133, 189, 215, 0.15);
+            --theme-shadow-soft: #cff0ff;
+            --theme-nav-bg: rgba(255, 255, 255, 0.98);
+            --theme-danger: #ef4444;
+            --theme-danger-soft: #fee2e2;
+            --theme-success: #16a34a;
+            --theme-success-soft: #dcfce7;
+            --theme-warn: #d97706;
+            --theme-warn-soft: #fef3c7;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--theme-bg);
+            color: var(--theme-text);
+            padding: 20px;
+            transition: background 0.4s ease, color 0.4s ease;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* ================================================================
+           ===== LOGIN PAGE STYLES =====
+           ================================================================ */
+        .container {
+            max-width: 420px;
+            width: 100%;
+            background: var(--theme-card);
+            border-radius: 40px;
+            padding: 40px 40px;
+            border: 5px solid var(--theme-card);
+            box-shadow: var(--theme-shadow) 0px 30px 30px -20px;
+            position: relative;
+            z-index: 1;
+            transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .heading {
+            text-align: center;
+            font-weight: 900;
+            font-size: 36px;
+            color: var(--theme-primary);
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+            transition: color 0.4s ease;
+        }
+
+        .sub-heading {
+            text-align: center;
+            font-size: 14px;
+            color: var(--theme-text-dim);
+            margin-bottom: 25px;
+            transition: color 0.4s ease;
+        }
+
+        .form { margin-top: 10px; }
+
+        .form .input {
+            width: 100%;
+            background: var(--theme-bg-soft);
+            border: none;
+            padding: 15px 20px;
+            border-radius: 20px;
+            margin-top: 15px;
+            box-shadow: var(--theme-shadow-soft) 0px 10px 10px -5px;
+            border-inline: 2px solid transparent;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            color: var(--theme-text);
+            font-family: inherit;
+        }
+
+        .form .input::placeholder { color: var(--theme-text-faint); }
+
+        .form .input:focus {
+            outline: none;
+            border-inline: 2px solid var(--theme-accent);
+            box-shadow: var(--theme-shadow-soft) 0px 10px 15px -8px;
+        }
+
+        .password-wrapper { position: relative; margin-top: 15px; }
+        .password-wrapper .input { margin-top: 0; padding-right: 50px; }
+        .password-wrapper .toggle-password {
+            position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; cursor: pointer;
+            color: var(--theme-text-faint); font-size: 16px; padding: 5px;
+            transition: color 0.2s ease;
+        }
+        .password-wrapper .toggle-password:hover { color: var(--theme-primary); }
+
+        .form .login-button {
+            display: block; width: 100%;
+            font-weight: bold;
+            background: var(--theme-gradient);
+            color: white;
+            padding-block: 15px;
+            margin: 20px auto 10px;
+            border-radius: 20px;
+            box-shadow: var(--theme-shadow) 0px 20px 10px -15px;
+            border: none;
+            transition: all 0.2s ease-in-out;
+            font-size: 16px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .form .login-button:hover { transform: scale(1.02); box-shadow: var(--theme-shadow) 0px 23px 10px -20px; }
+        .form .login-button:active { transform: scale(0.97); }
+        .form .login-button:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+        .error-message {
+            background: var(--theme-danger-soft);
+            color: var(--theme-danger);
+            padding: 12px 16px;
+            border-radius: 15px;
+            font-size: 13px;
+            margin-top: 15px;
+            text-align: center;
+            border: 1px solid var(--theme-danger-soft);
+            display: none;
+        }
+        .success-message {
+            background: var(--theme-warn-soft);
+            color: var(--theme-warn);
+            padding: 12px 16px;
+            border-radius: 15px;
+            font-size: 13px;
+            margin-top: 15px;
+            text-align: center;
+            border: 1px solid var(--theme-warn-soft);
+            display: none;
+        }
+
+        .agreement { display: block; text-align: center; margin-top: 25px; }
+        .agreement a { text-decoration: none; color: var(--theme-primary); font-size: 10px; }
+
+        .signup-link {
+            text-align: center; margin-top: 15px;
+            font-size: 14px; color: var(--theme-text-muted);
+        }
+        .signup-link a {
+            color: var(--theme-primary); text-decoration: none;
+            font-weight: 600; cursor: pointer;
+        }
+        .signup-link a:hover { text-decoration: underline; }
+
+        .loading-spinner {
+            display: inline-block; width: 20px; height: 20px;
+            border: 3px solid rgba(255,255,255,.3); border-radius: 50%;
+            border-top-color: #fff; animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ================================================================
+           ===== SIGN UP MODAL — SEQUENTIAL WIZARD =====
+           ================================================================ */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.45);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background 0.5s ease, backdrop-filter 0.5s ease;
+        }
+        .modal.active { display: flex; }
+
+        /* ★ Theme preview mode: shrink the modal, slide it aside, unblur the backdrop */
+        .modal.theme-preview-mode {
+            background: rgba(0,0,0,0.05);
+            backdrop-filter: blur(0px);
+            -webkit-backdrop-filter: blur(0px);
+            justify-content: flex-start;
+            align-items: center;
+            padding: 30px 40px;
+        }
+
+        .modal-content {
+            background: var(--theme-card);
+            padding: 0;
+            border-radius: 30px;
+            max-width: 620px;
+            width: 100%;
+            max-height: 92vh;
+            overflow: hidden;
+            box-shadow: var(--theme-shadow) 0px 30px 40px -20px;
+            color: var(--theme-text);
+            transition: max-width 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                        transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                        background 0.4s ease,
+                        box-shadow 0.5s ease;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            animation: modalPop 0.4s cubic-bezier(0.34, 1.4, 0.64, 1);
+        }
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.94) translateY(15px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* ★ Theme preview: shift the modal to the left side, keep it narrower */
+        .modal.theme-preview-mode .modal-content {
+            max-width: 560px;
+            transform: translateX(0);
+            box-shadow: 0 30px 60px -20px color-mix(in srgb, var(--theme-primary) 35%, transparent),
+                        0 0 0 1px color-mix(in srgb, var(--theme-primary) 12%, transparent);
+        }
+
+        /* ===== WIZARD HEADER ===== */
+        .wizard-header {
+            padding: 22px 28px 18px;
+            background: var(--theme-gradient);
+            color: white;
+            position: relative;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .wizard-header::before {
+            content: '';
+            position: absolute;
+            top: -60px; right: -60px;
+            width: 180px; height: 180px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
+            pointer-events: none;
+        }
+        .wizard-header::after {
+            content: '';
+            position: absolute;
+            bottom: -80px; left: -80px;
+            width: 200px; height: 200px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            pointer-events: none;
+        }
+        .wizard-header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+            position: relative;
+            z-index: 1;
+        }
+        .wizard-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 19px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+        }
+        .wizard-title i { font-size: 20px; }
+        .wizard-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.22);
+            border: none;
+            color: white;
+            font-size: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.25s ease;
+            flex-shrink: 0;
+        }
+        .wizard-close:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: rotate(90deg);
+        }
+
+        /* ===== STEP INDICATOR (WITH ICONS) ===== */
+        .wizard-steps {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 4px;
+            position: relative;
+            z-index: 1;
+            padding: 0 2px;
+        }
+        .wizard-step {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            position: relative;
+            min-width: 0;
+        }
+        .wizard-step-circle {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.22);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            font-weight: 700;
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            transition: all 0.35s cubic-bezier(0.34, 1.4, 0.64, 1);
+            position: relative;
+            z-index: 2;
+            flex-shrink: 0;
+        }
+        .wizard-step-circle .step-icon { display: block; }
+        .wizard-step-circle .step-check { display: none; }
+
+        .wizard-step.active .wizard-step-circle {
+            background: white;
+            color: var(--theme-primary);
+            border-color: white;
+            transform: scale(1.12);
+            box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.25),
+                        0 6px 18px rgba(0, 0, 0, 0.18);
+        }
+        .wizard-step.done .wizard-step-circle {
+            background: white;
+            color: var(--theme-success);
+            border-color: white;
+        }
+        .wizard-step.done .wizard-step-circle .step-icon { display: none; }
+        .wizard-step.done .wizard-step-circle .step-check { display: block; }
+
+        .wizard-step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 19px;
+            left: calc(50% + 22px);
+            right: calc(-50% + 22px);
+            height: 2px;
+            background: rgba(255, 255, 255, 0.25);
+            z-index: 1;
+            transition: background 0.35s ease;
+        }
+        .wizard-step.done:not(:last-child)::after {
+            background: white;
+        }
+
+        .wizard-step-label {
+            font-size: 10px;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.85);
+            white-space: nowrap;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+            transition: color 0.3s ease, opacity 0.3s ease;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        .wizard-step.active .wizard-step-label {
+            color: white;
+            opacity: 1;
+        }
+        .wizard-step.done .wizard-step-label {
+            color: rgba(255, 255, 255, 0.95);
+        }
+        .wizard-step:not(.active):not(.done) .wizard-step-label {
+            opacity: 0.7;
+        }
+
+        .wizard-progress-text {
+            font-size: 12px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.95);
+            text-align: center;
+            margin-top: 16px;
+            letter-spacing: 0.4px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ===== WIZARD BODY ===== */
+        .wizard-body {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 24px 28px 8px;
+            position: relative;
+            scrollbar-width: thin;
+            min-height: 0;
+        }
+        .wizard-body::-webkit-scrollbar { width: 6px; }
+        .wizard-body::-webkit-scrollbar-track { background: var(--theme-border-soft); border-radius: 10px; }
+        .wizard-body::-webkit-scrollbar-thumb { background: var(--theme-gradient); border-radius: 10px; }
+
+        /* ===== PANEL ANIMATION ===== */
+        .wizard-panel { display: none; animation: none; }
+        .wizard-panel.active { display: block; }
+        .wizard-panel.slide-in-right { animation: slideInRight 0.42s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .wizard-panel.slide-in-left { animation: slideInLeft 0.42s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .wizard-panel.slide-out-left { animation: slideOutLeft 0.32s cubic-bezier(0.55, 0.06, 0.68, 0.19) forwards; }
+        .wizard-panel.slide-out-right { animation: slideOutRight 0.32s cubic-bezier(0.55, 0.06, 0.68, 0.19) forwards; }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(60px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-60px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideOutLeft {
+            from { opacity: 1; transform: translateX(0); }
+            to   { opacity: 0; transform: translateX(-60px); }
+        }
+        @keyframes slideOutRight {
+            from { opacity: 1; transform: translateX(0); }
+            to   { opacity: 0; transform: translateX(60px); }
+        }
+
+        /* ===== PANEL HEADER ===== */
+        .panel-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .panel-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 20px;
+            background: var(--theme-gradient);
+            color: white;
+            font-size: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            box-shadow: 0 10px 25px -8px color-mix(in srgb, var(--theme-primary) 50%, transparent);
+        }
+        .panel-header h3 {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--theme-text);
+            margin-bottom: 4px;
+            letter-spacing: -0.2px;
+        }
+        .panel-header p {
+            font-size: 13px;
+            color: var(--theme-text-dim);
+            line-height: 1.5;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        /* ===== ERROR SUMMARY BANNER ===== */
+        .wizard-error-banner {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: var(--theme-danger-soft);
+            border: 1px solid color-mix(in srgb, var(--theme-danger) 25%, transparent);
+            border-radius: 12px;
+            color: var(--theme-danger);
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            animation: errorBannerIn 0.35s cubic-bezier(0.34, 1.4, 0.64, 1);
+        }
+        .wizard-error-banner.show { display: flex; }
+        .wizard-error-banner i {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        @keyframes errorBannerIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== FORM FIELDS ===== */
+        .input-group { margin-bottom: 14px; }
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--theme-text-muted);
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+        .input-group label i {
+            color: var(--theme-primary);
+            width: 18px;
+            margin-right: 4px;
+        }
+        .input-group .required-star { color: var(--theme-danger); }
+        .input-group .input {
+            width: 100%;
+            background: var(--theme-bg-soft);
+            border: 2px solid var(--theme-border-input);
+            padding: 12px 16px;
+            border-radius: 15px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            color: var(--theme-text);
+        }
+        .input-group .input:focus {
+            outline: none;
+            border-color: var(--theme-primary);
+            box-shadow: 0 0 0 3px var(--theme-primary-soft);
+        }
+        .input-group textarea.input { min-height: 80px; resize: vertical; }
+        .input-group .helper-text {
+            font-size: 11px;
+            color: var(--theme-text-faint);
+            margin-top: 3px;
+            display: block;
+        }
+        .input-group select.input {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 40px;
+            cursor: pointer;
+        }
+
+        /* ★ INVALID FIELD STYLING */
+        .input-group.invalid .input {
+            border-color: var(--theme-danger);
+            background: color-mix(in srgb, var(--theme-danger-soft) 40%, var(--theme-bg-soft));
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-danger) 15%, transparent);
+            animation: fieldShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+        }
+        .input-group.invalid label {
+            color: var(--theme-danger);
+        }
+        .input-group.invalid label i {
+            color: var(--theme-danger);
+        }
+        .input-group .field-error {
+            display: none;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--theme-danger);
+            margin-top: 5px;
+            animation: fieldErrorIn 0.3s ease;
+        }
+        .input-group.invalid .field-error {
+            display: flex;
+        }
+        .input-group .field-error i {
+            font-size: 11px;
+            flex-shrink: 0;
+        }
+        @keyframes fieldShake {
+            0%, 100% { transform: translateX(0); }
+            10%, 90% { transform: translateX(-3px); }
+            20%, 80% { transform: translateX(3px); }
+            30%, 70% { transform: translateX(-5px); }
+            40%, 60% { transform: translateX(5px); }
+            50% { transform: translateX(-3px); }
+        }
+        @keyframes fieldErrorIn {
+            from { opacity: 0; transform: translateY(-3px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== FORM ROW (2-COLUMN ON DESKTOP) ===== */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .custom-location-input { display: none; margin-top: 8px; }
+        .custom-location-input.active { display: block; }
+
+        /* ===== AVATAR UPLOAD (PANEL 1) ===== */
+        .avatar-upload-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 0 6px;
+        }
+        .avatar-upload {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: var(--theme-primary-soft);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 56px;
+            color: var(--theme-primary);
+            border: 5px solid var(--theme-card);
+            box-shadow: 0 15px 35px -12px color-mix(in srgb, var(--theme-primary) 40%, transparent);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .avatar-upload:hover {
+            transform: scale(1.04);
+            box-shadow: 0 20px 45px -12px color-mix(in srgb, var(--theme-primary) 55%, transparent);
+        }
+        .avatar-upload img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .avatar-upload .avatar-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 30px;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        .avatar-upload:hover .avatar-overlay { opacity: 1; }
+        .avatar-upload input[type="file"] { display: none; }
+
+        .avatar-hint {
+            margin-top: 14px;
+            font-size: 13px;
+            color: var(--theme-text-dim);
+            text-align: center;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        .avatar-hint.required-hint { color: var(--theme-danger); font-weight: 600; }
+        .avatar-hint.ok-hint { color: var(--theme-success); font-weight: 600; }
+
+        /* Avatar section invalid state */
+        .avatar-upload-section.invalid .avatar-upload {
+            border-color: var(--theme-danger);
+            box-shadow: 0 0 0 4px color-mix(in srgb, var(--theme-danger) 20%, transparent),
+                        0 15px 35px -12px color-mix(in srgb, var(--theme-danger) 50%, transparent);
+            animation: fieldShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+        }
+        .avatar-upload-section .avatar-error {
+            display: none;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--theme-danger);
+            margin-top: 8px;
+        }
+        .avatar-upload-section.invalid .avatar-error {
+            display: flex;
+        }
+
+        /* ===== THEME PICKER (PANEL 4) ===== */
+        .theme-preview-hint {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            background: var(--theme-primary-soft);
+            border-radius: 12px;
+            margin-bottom: 14px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--theme-primary);
+            border: 1px dashed color-mix(in srgb, var(--theme-primary) 30%, transparent);
+        }
+        .theme-preview-hint i {
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        /* ★ Theme preview button */
+        .theme-preview-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 18px;
+            background: var(--theme-card);
+            color: var(--theme-primary);
+            border: 2px solid var(--theme-primary);
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            font-family: inherit;
+            width: 100%;
+            margin-top: 4px;
+        }
+        .theme-preview-btn:hover {
+            background: var(--theme-primary-soft);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px color-mix(in srgb, var(--theme-primary) 25%, transparent);
+        }
+        .theme-preview-btn i {
+            font-size: 14px;
+        }
+
+        .theme-picker-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .theme-pick {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 6px 10px;
+            border-radius: 14px;
+            background: var(--theme-bg-soft);
+            border: 2px solid var(--theme-border-input);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            font-family: inherit;
+            text-align: center;
+            overflow: hidden;
+        }
+        .theme-pick:hover {
+            transform: translateY(-3px);
+            border-color: var(--theme-primary);
+            box-shadow: 0 8px 20px color-mix(in srgb, var(--theme-primary) 20%, transparent);
+        }
+        .theme-pick.active {
+            border-color: var(--theme-primary);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-primary) 20%, transparent);
+        }
+        .theme-pick.active::after {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--theme-gradient);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            animation: themeCheckPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes themeCheckPop {
+            0% { transform: scale(0) rotate(-45deg); }
+            100% { transform: scale(1) rotate(0); }
+        }
+        .theme-pick .theme-preview {
+            width: 100%;
+            height: 44px;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+        }
+        .theme-pick .theme-preview::before {
+            content: '';
+            position: absolute;
+            top: 6px; left: 6px; right: 6px;
+            height: 5px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.4);
+        }
+        .theme-pick .theme-preview::after {
+            content: '';
+            position: absolute;
+            bottom: 6px; left: 6px;
+            width: 45%; height: 18px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.6);
+        }
+        .theme-pick .theme-name {
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--theme-text-muted);
+            letter-spacing: 0.2px;
+        }
+        .theme-pick.active .theme-name { color: var(--theme-primary); }
+
+        .mode-toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--theme-bg-soft);
+            border-radius: 14px;
+            border: 2px solid var(--theme-border-input);
+        }
+        .mode-toggle-row .mode-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--theme-text-muted);
+        }
+        .mode-toggle-row .mode-label i { color: var(--theme-primary); }
+        .mode-toggle {
+            display: inline-flex;
+            background: var(--theme-card);
+            padding: 3px;
+            border-radius: 50px;
+            gap: 2px;
+            border: 1px solid var(--theme-border);
+        }
+        .mode-toggle .mode-btn {
+            padding: 6px 14px;
+            border-radius: 50px;
+            border: none;
+            background: transparent;
+            color: var(--theme-text-muted);
+            font-weight: 700;
+            font-size: 11px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.25s ease;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+        .mode-toggle .mode-btn:hover { color: var(--theme-primary); }
+        .mode-toggle .mode-btn.active {
+            background: var(--theme-gradient);
+            color: white;
+            box-shadow: 0 3px 10px color-mix(in srgb, var(--theme-primary) 35%, transparent);
+        }
+
+        /* ===== VERIFICATION (PANEL 5) ===== */
+        .verification-section {
+            background: var(--theme-danger-soft);
+            border: 2px dashed var(--theme-danger);
+            border-radius: 18px;
+            padding: 22px 20px;
+            margin-bottom: 14px;
+            text-align: center;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+        .verification-section.invalid {
+            animation: fieldShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+        }
+        .verification-section .verification-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--theme-danger);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: color 0.3s ease;
+        }
+        .verification-section .verification-title i { font-size: 16px; }
+
+        /* ★ FIXED: High-contrast input for verification code */
+        .verification-section .input {
+            text-align: center;
+            font-weight: 800;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            font-size: 18px;
+            padding: 14px 16px;
+            border: 2px solid var(--theme-danger) !important;
+            background: #ffffff !important;
+            color: #1a1a2e !important;
+            -webkit-text-fill-color: #1a1a2e !important;
+            caret-color: var(--theme-danger);
+            border-radius: 14px;
+            transition: all 0.3s ease;
+        }
+        /* Dark mode override: keep it readable */
+        [data-theme-mode="dark"] .verification-section .input {
+            background: #1e1e2e !important;
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+            caret-color: #ffffff;
+            border-color: var(--theme-danger) !important;
+        }
+        .verification-section .input:focus {
+            border-color: var(--theme-danger) !important;
+            box-shadow: 0 0 0 4px color-mix(in srgb, var(--theme-danger) 25%, transparent) !important;
+            outline: none;
+        }
+        .verification-section .input.verified {
+            border-color: var(--theme-success) !important;
+            box-shadow: 0 0 0 4px color-mix(in srgb, var(--theme-success) 25%, transparent) !important;
+            background: #f0fdf4 !important;
+            color: #166534 !important;
+            -webkit-text-fill-color: #166534 !important;
+        }
+        [data-theme-mode="dark"] .verification-section .input.verified {
+            background: #052e16 !important;
+            color: #86efac !important;
+            -webkit-text-fill-color: #86efac !important;
+        }
+        .verification-section .input.invalid {
+            border-color: var(--theme-danger) !important;
+            box-shadow: 0 0 0 4px color-mix(in srgb, var(--theme-danger) 25%, transparent) !important;
+            background: #fef2f2 !important;
+            color: #991b1b !important;
+            -webkit-text-fill-color: #991b1b !important;
+            animation: fieldShake 0.4s ease;
+        }
+        [data-theme-mode="dark"] .verification-section .input.invalid {
+            background: #450a0a !important;
+            color: #fca5a5 !important;
+            -webkit-text-fill-color: #fca5a5 !important;
+        }
+
+        .verification-status {
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 8px;
+            display: none;
+        }
+        .verification-status.show { display: block; }
+        .verification-status.valid { color: var(--theme-success); }
+        .verification-status.invalid { color: var(--theme-danger); }
+
+        /* ===== REVIEW SUMMARY ===== */
+        .review-summary {
+            background: var(--theme-bg-soft);
+            border-radius: 16px;
+            padding: 16px 18px;
+            margin-bottom: 16px;
+            border: 1px solid var(--theme-border);
+        }
+        .review-summary h4 {
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--theme-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .review-summary h4 i { color: var(--theme-primary); }
+        .review-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 13px;
+            padding: 6px 0;
+            border-bottom: 1px dashed var(--theme-border);
+        }
+        .review-row:last-child { border-bottom: none; }
+        .review-row .review-label {
+            color: var(--theme-text-dim);
+            font-weight: 600;
+            min-width: 90px;
+            flex-shrink: 0;
+            font-size: 12px;
+        }
+        .review-row .review-value {
+            color: var(--theme-text);
+            font-weight: 500;
+            flex: 1;
+            overflow-wrap: anywhere;
+        }
+        .review-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--theme-primary);
+        }
+
+        /* ===== WIZARD FOOTER ===== */
+        .wizard-footer {
+            padding: 16px 28px 22px;
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+            background: var(--theme-card);
+            border-top: 1px solid var(--theme-border);
+            position: relative;
+            z-index: 2;
+        }
+        .wizard-footer button {
+            flex: 1;
+            padding: 14px 20px;
+            border-radius: 16px;
+            border: none;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            letter-spacing: 0.2px;
+        }
+        .wizard-footer .btn-back {
+            flex: 0 0 auto;
+            min-width: 100px;
+            background: var(--theme-bg-soft);
+            color: var(--theme-text-muted);
+            border: 2px solid var(--theme-border-input);
+        }
+        .wizard-footer .btn-back:hover:not(:disabled) {
+            background: var(--theme-primary-soft);
+            color: var(--theme-primary);
+            border-color: var(--theme-primary);
+        }
+        .wizard-footer .btn-back:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .wizard-footer .btn-next {
+            background: var(--theme-gradient);
+            color: white;
+            box-shadow: 0 8px 22px -8px color-mix(in srgb, var(--theme-primary) 55%, transparent);
+        }
+        .wizard-footer .btn-next:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px -8px color-mix(in srgb, var(--theme-primary) 65%, transparent);
+        }
+        .wizard-footer .btn-next:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .wizard-footer .btn-submit {
+            background: linear-gradient(45deg, #16a34a 0%, #22c55e 100%);
+            color: white;
+            box-shadow: 0 8px 22px -8px rgba(22, 163, 74, 0.55);
+        }
+        .wizard-footer .btn-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px -8px rgba(22, 163, 74, 0.65);
+        }
+        .wizard-footer .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ================================================================
+           ===== FULLSCREEN THEME PREVIEW =====
+           ================================================================ */
+        .theme-preview-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            background: transparent;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+        }
+        .theme-preview-overlay.active {
+            display: flex;
+            pointer-events: auto;
+        }
+        .theme-preview-overlay .preview-back-btn {
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 22px;
+            background: var(--theme-card);
+            color: var(--theme-text);
+            border: 2px solid var(--theme-border-input);
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 14px;
+            font-family: inherit;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            transition: all 0.25s ease;
+            z-index: 2001;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        .theme-preview-overlay .preview-back-btn:hover {
+            background: var(--theme-primary);
+            color: white;
+            border-color: var(--theme-primary);
+            transform: translateX(-4px);
+            box-shadow: 0 12px 32px color-mix(in srgb, var(--theme-primary) 40%, transparent);
+        }
+        .theme-preview-overlay .preview-back-btn i {
+            font-size: 14px;
+        }
+
+        /* ================================================================
+           ===== PANEL-SPECIFIC 2-COLUMN DESKTOP LAYOUT =====
+           ================================================================ */
+        .panel-grid-2col {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0;
+        }
+        .panel-col {
+            min-width: 0;
+        }
+
+        .panel-photo-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0;
+            align-items: center;
+        }
+
+        /* ================================================================
+           ===== DESKTOP WIDE LAYOUT (≥ 900px) =====
+           ================================================================ */
+        @media (min-width: 900px) {
+            .modal-content {
+                max-width: min(1280px, 95vw);
+                max-height: 94vh;
+            }
+
+            .wizard-header {
+                padding: 22px 40px 16px;
+            }
+            .wizard-header-top {
+                margin-bottom: 12px;
+            }
+            .wizard-title { font-size: 22px; }
+            .wizard-title i { font-size: 22px; }
+            .wizard-step-circle {
+                width: 40px;
+                height: 40px;
+                font-size: 15px;
+            }
+            .wizard-step:not(:last-child)::after {
+                top: 20px;
+                left: calc(50% + 23px);
+                right: calc(-50% + 23px);
+            }
+            .wizard-step-label { font-size: 11px; }
+            .wizard-progress-text {
+                margin-top: 12px;
+                font-size: 12.5px;
+            }
+
+            .wizard-body {
+                padding: 20px 40px 4px;
+            }
+
+            .wizard-footer {
+                padding: 14px 40px 18px;
+            }
+
+            .panel-header {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                text-align: left;
+                margin-bottom: 18px;
+            }
+            .panel-icon {
+                width: 52px;
+                height: 52px;
+                font-size: 22px;
+                border-radius: 16px;
+                margin: 0;
+                flex-shrink: 0;
+            }
+            .panel-header-text {
+                flex: 1;
+                min-width: 0;
+            }
+            .panel-header h3 {
+                font-size: 19px;
+                margin-bottom: 2px;
+            }
+            .panel-header p {
+                font-size: 12.5px;
+                max-width: none;
+                margin: 0;
+            }
+
+            .input-group {
+                margin-bottom: 12px;
+            }
+            .input-group label {
+                font-size: 12.5px;
+                margin-bottom: 5px;
+            }
+            .input-group .input {
+                padding: 10px 14px;
+                font-size: 13.5px;
+                border-radius: 12px;
+            }
+            .input-group textarea.input {
+                min-height: 60px;
+            }
+            .input-group .helper-text {
+                font-size: 10.5px;
+            }
+
+            .panel-grid-2col {
+                grid-template-columns: 1fr 1fr;
+                gap: 0 28px;
+            }
+
+            .panel-photo-grid {
+                grid-template-columns: auto 1fr;
+                gap: 32px;
+                align-items: center;
+            }
+            .avatar-upload-section {
+                align-items: flex-start;
+                padding: 0;
+            }
+            .avatar-upload {
+                width: 150px;
+                height: 150px;
+                font-size: 54px;
+            }
+            .avatar-hint {
+                margin-top: 0;
+                text-align: left;
+                font-size: 13px;
+                max-width: 340px;
+            }
+            .avatar-upload-section .avatar-error {
+                justify-content: flex-start;
+            }
+
+            .panel-theme-grid {
+                display: grid;
+                grid-template-columns: 1.6fr 1fr;
+                gap: 0 28px;
+                align-items: start;
+            }
+            .panel-theme-grid .theme-picker-grid {
+                grid-template-columns: repeat(3, 1fr);
+                margin-bottom: 0;
+            }
+            .panel-theme-side {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+            .mode-toggle-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+                padding: 12px 14px;
+            }
+            .mode-toggle {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .mode-toggle .mode-btn {
+                flex: 1;
+                justify-content: center;
+                padding: 7px 12px;
+            }
+
+            .panel-verify-grid {
+                display: grid;
+                grid-template-columns: 1.15fr 1fr;
+                gap: 0 28px;
+                align-items: start;
+            }
+            .panel-verify-grid .review-summary {
+                margin-bottom: 0;
+            }
+            .verification-section {
+                margin-bottom: 0;
+            }
+
+            .panel-col .form-row {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+
+            .modal.theme-preview-mode {
+                justify-content: flex-start;
+                padding: 24px 32px;
+            }
+            .modal.theme-preview-mode .modal-content {
+                max-width: 640px;
+                transform: translateX(0);
+            }
+        }
+
+        /* ================================================================
+           ===== RESPONSIVE — MOBILE (≤ 640px) =====
+           ================================================================ */
+        @media (max-width: 640px) {
+            .container { padding: 30px 24px; }
+            .heading { font-size: 30px; }
+
+            .modal {
+                padding: 14px;
+                align-items: center;
+            }
+            .modal-content {
+                max-width: 100%;
+                max-height: 92vh;
+                border-radius: 24px;
+            }
+
+            .modal.theme-preview-mode {
+                background: rgba(0,0,0,0.30);
+                backdrop-filter: blur(6px);
+                justify-content: center;
+                padding: 14px;
+            }
+            .modal.theme-preview-mode .modal-content {
+                max-width: 100%;
+                transform: none;
+            }
+
+            .wizard-header { padding: 18px 18px 14px; }
+            .wizard-title { font-size: 17px; }
+            .wizard-title i { font-size: 18px; }
+            .wizard-body { padding: 20px 18px 6px; }
+            .wizard-footer { padding: 14px 18px 18px; }
+            .wizard-footer .btn-back { min-width: 70px; padding: 12px 14px; font-size: 13px; }
+            .wizard-footer .btn-next,
+            .wizard-footer .btn-submit { padding: 12px 16px; font-size: 13px; }
+
+            .wizard-step-circle {
+                width: 32px;
+                height: 32px;
+                font-size: 13px;
+            }
+            .wizard-step:not(:last-child)::after {
+                top: 16px;
+                left: calc(50% + 19px);
+                right: calc(-50% + 19px);
+            }
+            .wizard-step-label { font-size: 9px; }
+
+            .panel-header h3 { font-size: 18px; }
+            .panel-icon { width: 56px; height: 56px; font-size: 22px; }
+            .avatar-upload { width: 130px; height: 130px; font-size: 46px; }
+            .form-row { grid-template-columns: 1fr; gap: 0; }
+            .theme-picker-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+            .theme-pick { padding: 10px 4px 8px; gap: 6px; }
+            .theme-pick .theme-preview { height: 38px; }
+            .theme-pick .theme-name { font-size: 9px; }
+            .mode-toggle-row { flex-direction: column; align-items: stretch; gap: 8px; }
+            .mode-toggle { width: 100%; justify-content: space-between; }
+            .mode-toggle .mode-btn { flex: 1; justify-content: center; }
+
+            .panel-grid-2col,
+            .panel-photo-grid,
+            .panel-theme-grid,
+            .panel-verify-grid {
+                grid-template-columns: 1fr !important;
+                gap: 0 !important;
+            }
+            .panel-theme-side {
+                margin-top: 12px;
+            }
+
+            .theme-preview-overlay .preview-back-btn {
+                top: 16px;
+                left: 16px;
+                padding: 10px 18px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .wizard-step-label { display: none; }
+            .wizard-progress-text { margin-top: 10px; font-size: 11px; }
+            .wizard-step-circle { width: 30px; height: 30px; font-size: 12px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .theme-bg-shapes .shape,
+            .theme-bg-shapes .shape * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+            .wizard-panel.slide-in-right,
+            .wizard-panel.slide-in-left,
+            .wizard-panel.slide-out-left,
+            .wizard-panel.slide-out-right {
+                animation: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ===== BACKGROUND LAYERS ===== -->
+    <div class="theme-bg-base"></div>
+    <div class="theme-bg-shapes" id="themeBgShapes"><!-- Injected by JS --></div>
+    <div class="theme-bg-overlay"></div>
+
+    <!-- ===== LOGIN CARD ===== -->
+    <div class="container">
+        <div class="heading">TIMAWA</div>
+        <div class="sub-heading">✨ Sign in to access the hub ✨</div>
+
+        <div id="errorMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message"></div>
+
+        <form id="loginForm" class="form">
+            <input required class="input" type="email" id="email" placeholder="E-mail" />
+
+            <div class="password-wrapper">
+                <input required class="input" type="password" id="password" placeholder="Password" />
+                <button type="button" class="toggle-password" onclick="togglePassword('password', this)">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+
+            <button type="submit" class="login-button" id="loginBtn">Sign In</button>
+        </form>
+
+        <span class="agreement"><a href="#">Made with ❤️ for the TIMAWA squad</a></span>
+
+        <div class="signup-link">
+            Don't have an account? <a onclick="showSignUp()">Sign up here</a>
+        </div>
+    </div>
+
+    <!-- ================================================================
+         ===== FULLSCREEN THEME PREVIEW OVERLAY =====
+         ================================================================ -->
+    <div class="theme-preview-overlay" id="themePreviewOverlay">
+        <button type="button" class="preview-back-btn" onclick="closeThemePreview()">
+            <i class="fas fa-arrow-left"></i> Back to form
+        </button>
+    </div>
+
+    <!-- ================================================================
+         ===== SIGN UP MODAL — SEQUENTIAL WIZARD =====
+         ================================================================ -->
+    <div id="signupModal" class="modal">
+        <div class="modal-content">
+
+            <!-- WIZARD HEADER -->
+            <div class="wizard-header">
+                <div class="wizard-header-top">
+                    <div class="wizard-title">
+                        <i class="fas fa-user-astronaut"></i>
+                        Join the Squad
+                    </div>
+                    <button type="button" class="wizard-close" onclick="closeSignUp()" aria-label="Close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="wizard-steps" id="wizardSteps">
+                    <div class="wizard-step active" data-step="1">
+                        <div class="wizard-step-circle">
+                            <span class="step-icon"><i class="fas fa-camera"></i></span>
+                            <span class="step-check"><i class="fas fa-check"></i></span>
+                        </div>
+                        <span class="wizard-step-label">Photo</span>
+                    </div>
+                    <div class="wizard-step" data-step="2">
+                        <div class="wizard-step-circle">
+                            <span class="step-icon"><i class="fas fa-id-card"></i></span>
+                            <span class="step-check"><i class="fas fa-check"></i></span>
+                        </div>
+                        <span class="wizard-step-label">Details</span>
+                    </div>
+                    <div class="wizard-step" data-step="3">
+                        <div class="wizard-step-circle">
+                            <span class="step-icon"><i class="fas fa-share-alt"></i></span>
+                            <span class="step-check"><i class="fas fa-check"></i></span>
+                        </div>
+                        <span class="wizard-step-label">Socials</span>
+                    </div>
+                    <div class="wizard-step" data-step="4">
+                        <div class="wizard-step-circle">
+                            <span class="step-icon"><i class="fas fa-palette"></i></span>
+                            <span class="step-check"><i class="fas fa-check"></i></span>
+                        </div>
+                        <span class="wizard-step-label">Theme</span>
+                    </div>
+                    <div class="wizard-step" data-step="5">
+                        <div class="wizard-step-circle">
+                            <span class="step-icon"><i class="fas fa-shield-alt"></i></span>
+                            <span class="step-check"><i class="fas fa-check"></i></span>
+                        </div>
+                        <span class="wizard-step-label">Verify</span>
+                    </div>
+                </div>
+
+                <div class="wizard-progress-text" id="wizardProgressText">Step 1 of 5 — Profile Picture</div>
+            </div>
+
+            <!-- WIZARD BODY -->
+            <div class="wizard-body" id="wizardBody">
+                <form id="signupForm" novalidate>
+
+                    <!-- ============================================================
+                         PANEL 1: PROFILE PICTURE
+                         ============================================================ -->
+                    <div class="wizard-panel active" data-panel="1">
+                        <div class="panel-header">
+                            <div class="panel-icon"><i class="fas fa-camera"></i></div>
+                            <div class="panel-header-text">
+                                <h3>Add Your Profile Picture</h3>
+                                <p>Let the squad recognize you! Upload a clear photo of yourself.</p>
+                            </div>
+                        </div>
+
+                        <div class="panel-photo-grid">
+                            <div class="avatar-upload-section" id="avatarSection">
+                                <label class="avatar-upload" for="signupPhoto">
+                                    <span id="avatarPlaceholder"><i class="fas fa-user"></i></span>
+                                    <img id="avatarPreview" style="display:none;" alt="Profile preview" />
+                                    <div class="avatar-overlay"><i class="fas fa-camera"></i></div>
+                                </label>
+                                <input type="file" id="signupPhoto" accept="image/*" />
+                                <div class="avatar-hint required-hint" id="avatarHint">
+                                    <i class="fas fa-exclamation-circle"></i> Profile picture is required
+                                </div>
+                                <div class="avatar-error" id="avatarError">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    <span>Please upload a profile picture to continue.</span>
+                                </div>
+                            </div>
+                            <div class="panel-col" style="color: var(--theme-text-muted); font-size: 13px; line-height: 1.6;">
+                                <p style="margin-bottom: 10px;"><strong style="color: var(--theme-text);">Why a photo?</strong></p>
+                                <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px;">
+                                    <li><i class="fas fa-check-circle" style="color: var(--theme-success); margin-right: 6px;"></i> Helps the squad recognize you in chats</li>
+                                    <li><i class="fas fa-check-circle" style="color: var(--theme-success); margin-right: 6px;"></i> Shown on your member card and profile</li>
+                                    <li><i class="fas fa-check-circle" style="color: var(--theme-success); margin-right: 6px;"></i> Can be changed anytime later</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ============================================================
+                         PANEL 2: PERSONAL DETAILS
+                         ============================================================ -->
+                    <div class="wizard-panel" data-panel="2">
+                        <div class="panel-header">
+                            <div class="panel-icon"><i class="fas fa-id-card"></i></div>
+                            <div class="panel-header-text">
+                                <h3>Your Details</h3>
+                                <p>Tell us about yourself so the squad can get to know you.</p>
+                            </div>
+                        </div>
+
+                        <div class="panel-grid-2col">
+                            <!-- LEFT COLUMN: identity -->
+                            <div class="panel-col">
+                                <div class="form-row">
+                                    <div class="input-group" data-field="signupName">
+                                        <label><i class="fas fa-user"></i> Username <span class="required-star">*</span></label>
+                                        <input class="input" type="text" id="signupName" placeholder="Enter your username" />
+                                        <span class="field-error"><i class="fas fa-exclamation-circle"></i> <span>Username is required.</span></span>
+                                    </div>
+                                    <div class="input-group" data-field="signupEmail">
+                                        <label><i class="fas fa-envelope"></i> E-mail <span class="required-star">*</span></label>
+                                        <input class="input" type="email" id="signupEmail" placeholder="you@example.com" />
+                                        <span class="field-error"><i class="fas fa-exclamation-circle"></i> <span>Email is required.</span></span>
+                                    </div>
+                                </div>
+
+                                <div class="input-group" data-field="signupPassword">
+                                    <label><i class="fas fa-lock"></i> Password <span class="required-star">*</span></label>
+                                    <div class="password-wrapper" style="margin-top:0;">
+                                        <input class="input" type="password" id="signupPassword" placeholder="Min 6 characters" />
+                                        <button type="button" class="toggle-password" onclick="togglePassword('signupPassword', this)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <span class="helper-text">At least 6 characters</span>
+                                    <span class="field-error"><i class="fas fa-exclamation-circle"></i> <span>Password is required.</span></span>
+                                </div>
+
+                                <div class="input-group" data-field="signupBio">
+                                    <label><i class="fas fa-info-circle"></i> Bio <span class="required-star">*</span></label>
+                                    <textarea class="input" id="signupBio" placeholder="Tell the squad about yourself..." rows="3"></textarea>
+                                    <span class="field-error"><i class="fas fa-exclamation-circle"></i> <span>Bio is required.</span></span>
+                                </div>
+                            </div>
+
+                            <!-- RIGHT COLUMN: profile -->
+                            <div class="panel-col">
+                                <div class="form-row">
+                                    <div class="input-group" data-field="locationSelect">
+                                        <label><i class="fas fa-map-marker-alt"></i> Location <span class="required-star">*</span></label>
+                                        <select class="input" id="locationSelect" onchange="toggleCustomLocation()">
+                                            <option value="">Select your location</option>
+                                            <option value="Alabat, Quezon">📍 Alabat, Quezon</option>
+                                            <option value="Perez, Quezon">📍 Perez, Quezon</option>
+                                            <option value="Atimonan, Quezon">📍 Atimonan, Quezon</option>
+                                            <option value="Lucena, Quezon">📍 Lucena, Quezon</option>
+                                            <option value="Lucban, Quezon">📍 Lucban, Quezon</option>
+                                            <option value="San Pedro, Laguna">📍 San Pedro, Laguna</option>
+                                            <option value="Santa Cruz, Laguna">📍 Santa Cruz, Laguna</option>
+                                            <option value="custom">✏️ Others (Customize)</option>
+                                        </select>
+                                        <div class="custom-location-input" id="customLocationInput">
+                                            <input class="input" type="text" id="customLocation" placeholder="Enter your location..." />
+                                        </div>
+                                        <span class="field-error"><i class="fas fa-exclamation-circle"></i> <span>Location is required.</span></span>
+                                    </div>
+                                    <div class="input-group" data-field="signupBirthday">
+                                        <label><i class="fas fa-calendar-alt"></i> Birthday <span class="required-star">*</span></label>
+                                        <input class="input" type="date" id="signupBirthday" />
+                                        <span class="field-error"><i class="fas fa-exclamation-circle"></i> <span>Birthday is required.</span></span>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="input-group" data-field="signupOccupation">
+                                        <label><i class="fas fa-briefcase"></i> Occupation <span class="required-star">*</span></label>
+                                        <input class="input" type="text" id="signupOccupation" placeholder="e.g., Software Engineer" />
+                                        <span class="field-error"><i class="fas fa-exclamation-circle"></i> <span>Occupation is required.</span></span>
+                                    </div>
+                                    <div class="input-group" data-field="signupInterests">
+                                        <label><i class="fas fa-heart"></i> Interests <span class="required-star">*</span></label>
+                                        <input class="input" type="text" id="signupInterests" placeholder="e.g., Coffee, Travel" />
+                                        <span class="field-error"><i class="fas fa-exclamation-circle"></i> <span>Interests are required.</span></span>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="input-group" data-field="signupStatus">
+                                        <label><i class="fas fa-circle"></i> Status <span class="required-star">*</span></label>
+                                        <select class="input" id="signupStatus">
+                                            <option value="">Select your status</option>
+                                            <option value="available">🟢 Available</option>
+                                            <option value="busy">🔴 Busy</option>
+                                            <option value="away">🟡 Away</option>
+                                            <option value="dnd">🟣 Do Not Disturb</option>
+                                        </select>
+                                        <span class="field-error"><i class="fas fa-exclamation-circle"></i> <span>Status is required.</span></span>
+                                    </div>
+                                    <div class="input-group" data-field="signupLoveLife">
+                                        <label><i class="fas fa-heart-broken"></i> Love Life <span class="required-star">*</span></label>
+                                        <select class="input" id="signupLoveLife">
+                                            <option value="">Select your love life status</option>
+                                            <option value="Single">💔 Single</option>
+                                            <option value="MU">💞 MU (Mutual Understanding)</option>
+                                            <option value="Married">💍 Married</option>
+                                        </select>
+                                        <span class="field-error"><i class="fas fa-exclamation-circle"></i> <span>Love life status is required.</span></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ============================================================
+                         PANEL 3: SOCIALS (OPTIONAL)
+                         ============================================================ -->
+                    <div class="wizard-panel" data-panel="3">
+                        <div class="panel-header">
+                            <div class="panel-icon"><i class="fas fa-share-alt"></i></div>
+                            <div class="panel-header-text">
+                                <h3>Connect Your Socials</h3>
+                                <p>Optional — let the squad find and follow you elsewhere.</p>
+                            </div>
+                        </div>
+
+                        <div class="panel-grid-2col">
+                            <div class="panel-col">
+                                <div class="input-group" data-field="signupFacebook">
+                                    <label><i class="fab fa-facebook" style="color:#1877f2;"></i> Facebook Profile URL</label>
+                                    <input class="input" type="url" id="signupFacebook" placeholder="https://facebook.com/username" />
+                                    <span class="field-error"><i class="fas fa-exclamation-circle"></i> <span>Please enter a valid Facebook URL.</span></span>
+                                </div>
+                                <div class="input-group">
+                                    <label><i class="fab fa-instagram" style="color:#e1306c;"></i> Instagram</label>
+                                    <input class="input" type="text" id="signupInstagram" placeholder="@username" />
+                                </div>
+                            </div>
+                            <div class="panel-col">
+                                <div class="input-group">
+                                    <label><i class="fab fa-tiktok"></i> TikTok</label>
+                                    <input class="input" type="text" id="signupTiktok" placeholder="@username" />
+                                </div>
+                                <div class="input-group">
+                                    <label><i class="fab fa-twitter" style="color:#1da1f2;"></i> Twitter / X</label>
+                                    <input class="input" type="text" id="signupTwitter" placeholder="@username" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ============================================================
+                         PANEL 4: THEME PICKER — with fullscreen Preview Button
+                         ============================================================ -->
+                    <div class="wizard-panel" data-panel="4">
+                        <div class="panel-header">
+                            <div class="panel-icon"><i class="fas fa-palette"></i></div>
+                            <div class="panel-header-text">
+                                <h3>Pick Your Vibe</h3>
+                                <p>Choose a theme, then preview it fullscreen.</p>
+                            </div>
+                        </div>
+
+                        <div class="panel-theme-grid">
+                            <div class="panel-col">
+                                <div class="theme-picker-grid" id="signupThemeGrid"></div>
+                            </div>
+                            <div class="panel-theme-side">
+                                <div class="theme-preview-hint">
+                                    <i class="fas fa-lightbulb"></i>
+                                    <span>Select a theme, then click <strong>Preview Fullscreen</strong> to see only the animated background.</span>
+                                </div>
+
+                                <!-- ★ FULLSCREEN THEME PREVIEW BUTTON -->
+                                <button type="button" class="theme-preview-btn" onclick="openThemePreview()">
+                                    <i class="fas fa-expand"></i>
+                                    Preview Fullscreen
+                                </button>
+
+                                <div class="mode-toggle-row">
+                                    <div class="mode-label">
+                                        <i class="fas fa-circle-half-stroke"></i>
+                                        <span>Mode</span>
+                                    </div>
+                                    <div class="mode-toggle" id="signupModeToggle">
+                                        <button type="button" class="mode-btn active" data-mode="light" onclick="setSignupThemeMode('light')">
+                                            <i class="fas fa-sun"></i> Light
+                                        </button>
+                                        <button type="button" class="mode-btn" data-mode="dark" onclick="setSignupThemeMode('dark')">
+                                            <i class="fas fa-moon"></i> Dark
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ============================================================
+                         PANEL 5: VERIFICATION + REVIEW
+                         ============================================================ -->
+                    <div class="wizard-panel" data-panel="5">
+                        <div class="panel-header">
+                            <div class="panel-icon"><i class="fas fa-shield-alt"></i></div>
+                            <div class="panel-header-text">
+                                <h3>Squad Verification</h3>
+                                <p>Enter the squad code to confirm you're one of us, then review your details.</p>
+                            </div>
+                        </div>
+
+                        <div class="panel-verify-grid">
+                            <div class="panel-col">
+                                <div class="review-summary" id="signupReview">
+                                    <!-- Populated by JS -->
+                                </div>
+                            </div>
+                            <div class="panel-col">
+                                <div class="verification-section" id="verificationSection">
+                                    <div class="verification-title">
+                                        <i class="fas fa-shield-alt"></i> Enter Verification Code
+                                    </div>
+                                    <input class="input" type="text" id="signupVerification"
+                                           placeholder="CODE"
+                                           autocomplete="off"
+                                           spellcheck="false"
+                                           maxlength="10"
+                                           oninput="checkVerificationCode()" />
+                                    <div class="verification-status" id="verificationStatus"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+
+            <!-- WIZARD FOOTER -->
+            <div class="wizard-footer">
+                <button type="button" class="btn-back" id="wizardBackBtn" onclick="wizardBack()" disabled>
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <button type="button" class="btn-next" id="wizardNextBtn" onclick="wizardNext()">
+                    Next <i class="fas fa-arrow-right"></i>
+                </button>
+                <button type="button" class="btn-submit" id="wizardSubmitBtn" onclick="submitSignup()" style="display:none;">
+                    <i class="fas fa-rocket"></i> Join the Squad!
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // ================================================================
+        // FIREBASE CONFIG
+        // ================================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyC05mMZ304IN_S0-NRv2Uf7E5_tZLiM4Js",
+            authDomain: "timawa2.firebaseapp.com",
+            projectId: "timawa2",
+            storageBucket: "timawa2.firebasestorage.app",
+            messagingSenderId: "1051426551565",
+            appId: "1:1051426551565:web:01d33631309bb9336fe244"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        const CLOUDINARY_CONFIG = {
+            cloudName: "ooq99nlw",
+            uploadPreset: "t-imawa"
+        };
+
+        const VERIFICATION_CODE = "AWAMIT";
+
+        let selectedAvatarFile = null;
+
+        // ================================================================
+        // WIZARD STATE
+        // ================================================================
+        const WIZARD_TOTAL_STEPS = 5;
+        const WIZARD_STEP_TITLES = [
+            'Profile Picture',
+            'Your Details',
+            'Socials',
+            'Theme',
+            'Verification'
+        ];
+
+        let currentWizardStep = 1;
+        let isAnimatingPanel = false;
+        let isThemePreviewActive = false;
+
+        function updateWizardStepIndicator() {
+            document.querySelectorAll('.wizard-step').forEach(step => {
+                const stepNum = parseInt(step.dataset.step, 10);
+                step.classList.remove('active', 'done');
+                if (stepNum < currentWizardStep) step.classList.add('done');
+                else if (stepNum === currentWizardStep) step.classList.add('active');
+            });
+
+            const progressText = document.getElementById('wizardProgressText');
+            if (progressText) {
+                progressText.textContent = `Step ${currentWizardStep} of ${WIZARD_TOTAL_STEPS} — ${WIZARD_STEP_TITLES[currentWizardStep - 1]}`;
+            }
+
+            const backBtn = document.getElementById('wizardBackBtn');
+            const nextBtn = document.getElementById('wizardNextBtn');
+            const submitBtn = document.getElementById('wizardSubmitBtn');
+
+            backBtn.disabled = currentWizardStep === 1;
+
+            if (currentWizardStep === WIZARD_TOTAL_STEPS) {
+                nextBtn.style.display = 'none';
+                submitBtn.style.display = 'inline-flex';
+            } else {
+                nextBtn.style.display = 'inline-flex';
+                submitBtn.style.display = 'none';
+            }
+
+            const modal = document.getElementById('signupModal');
+            if (modal) {
+                modal.classList.toggle('theme-preview-mode', currentWizardStep === 4);
+            }
+        }
+
+        function animateToPanel(targetStep, direction) {
+            if (isAnimatingPanel) return;
+            isAnimatingPanel = true;
+
+            const currentPanel = document.querySelector(`.wizard-panel[data-panel="${currentWizardStep}"]`);
+            const targetPanel = document.querySelector(`.wizard-panel[data-panel="${targetStep}"]`);
+            if (!currentPanel || !targetPanel) {
+                isAnimatingPanel = false;
+                return;
+            }
+
+            const outgoingClass = direction === 'forward' ? 'slide-out-left' : 'slide-out-right';
+            const incomingClass = direction === 'forward' ? 'slide-in-right' : 'slide-in-left';
+
+            currentPanel.classList.add(outgoingClass);
+
+            setTimeout(() => {
+                currentPanel.classList.remove('active', outgoingClass);
+                targetPanel.classList.add('active', incomingClass);
+
+                const body = document.getElementById('wizardBody');
+                if (body) body.scrollTop = 0;
+
+                setTimeout(() => {
+                    targetPanel.classList.remove(incomingClass);
+                    isAnimatingPanel = false;
+                }, 420);
+            }, 320);
+        }
+
+        // ================================================================
+        // ★ FULLSCREEN THEME PREVIEW
+        // ================================================================
+        function openThemePreview() {
+            // Apply the currently selected theme first
+            applyTheme(selectedTheme);
+
+            isThemePreviewActive = true;
+
+            const overlay = document.getElementById('themePreviewOverlay');
+            const modal = document.getElementById('signupModal');
+            const container = document.querySelector('.container');
+            const bgBase = document.querySelector('.theme-bg-base');
+            const bgShapes = document.querySelector('.theme-bg-shapes');
+            const bgOverlay = document.querySelector('.theme-bg-overlay');
+
+            if (overlay) overlay.classList.add('active');
+
+            // Hide everything except background layers and the preview overlay
+            if (modal) modal.style.display = 'none';
+            if (container) container.style.display = 'none';
+
+            // Make sure the background layers are fully visible (they already are,
+            // but we ensure no stacking issues by bringing them forward)
+            if (bgBase) bgBase.style.zIndex = '1';
+            if (bgShapes) bgShapes.style.zIndex = '2';
+            if (bgOverlay) bgOverlay.style.zIndex = '3';
+        }
+
+        function closeThemePreview() {
+            isThemePreviewActive = false;
+
+            const overlay = document.getElementById('themePreviewOverlay');
+            const modal = document.getElementById('signupModal');
+            const container = document.querySelector('.container');
+            const bgBase = document.querySelector('.theme-bg-base');
+            const bgShapes = document.querySelector('.theme-bg-shapes');
+            const bgOverlay = document.querySelector('.theme-bg-overlay');
+
+            if (overlay) overlay.classList.remove('active');
+
+            // Restore visibility
+            if (modal && modal.classList.contains('active')) modal.style.display = '';
+            if (container) container.style.display = '';
+
+            // Reset z-indexes to original values
+            if (bgBase) bgBase.style.zIndex = '';
+            if (bgShapes) bgShapes.style.zIndex = '';
+            if (bgOverlay) bgOverlay.style.zIndex = '';
+        }
+
+        // ================================================================
+        // ★ FIELD ERROR HELPERS
+        // ================================================================
+        function clearFieldErrors(scope) {
+            const root = scope || document;
+            root.querySelectorAll('.input-group.invalid').forEach(g => g.classList.remove('invalid'));
+            const avatarSection = document.getElementById('avatarSection');
+            if (avatarSection) avatarSection.classList.remove('invalid');
+            const verifSection = document.getElementById('verificationSection');
+            if (verifSection) verifSection.classList.remove('invalid');
+            hideErrorBanner();
+        }
+
+        function markFieldInvalid(fieldId, message) {
+            const group = document.querySelector(`.input-group[data-field="${fieldId}"]`);
+            if (!group) return null;
+            group.classList.add('invalid');
+            const errorSpan = group.querySelector('.field-error span');
+            if (errorSpan && message) errorSpan.textContent = message;
+            const input = group.querySelector('.input');
+            if (input) {
+                input.style.animation = 'none';
+                void input.offsetWidth;
+                input.style.animation = '';
+            }
+            return group;
+        }
+
+        function markAvatarInvalid(message) {
+            const section = document.getElementById('avatarSection');
+            if (!section) return null;
+            section.classList.add('invalid');
+            const errSpan = section.querySelector('.avatar-error span');
+            if (errSpan && message) errSpan.textContent = message;
+            const upload = section.querySelector('.avatar-upload');
+            if (upload) {
+                upload.style.animation = 'none';
+                void upload.offsetWidth;
+                upload.style.animation = '';
+            }
+            return section;
+        }
+
+        function markVerificationInvalid(message) {
+            const section = document.getElementById('verificationSection');
+            if (!section) return null;
+            section.classList.add('invalid');
+            const status = document.getElementById('verificationStatus');
+            if (status) {
+                status.classList.add('show', 'invalid');
+                status.classList.remove('valid');
+                status.innerHTML = `<i class="fas fa-times-circle"></i> ${message || 'Incorrect verification code.'}`;
+            }
+            return section;
+        }
+
+        function showErrorBanner(message) {
+            let banner = document.getElementById('wizardErrorBanner');
+            if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'wizardErrorBanner';
+                banner.className = 'wizard-error-banner';
+                const body = document.getElementById('wizardBody');
+                if (body) body.insertBefore(banner, body.firstChild);
+            }
+            banner.innerHTML = `<i class="fas fa-exclamation-circle"></i><span>${escapeHtml(message)}</span>`;
+            banner.classList.add('show');
+        }
+
+        function hideErrorBanner() {
+            const banner = document.getElementById('wizardErrorBanner');
+            if (banner) banner.classList.remove('show');
+        }
+
+        function scrollToField(target) {
+            if (!target) return;
+            const body = document.getElementById('wizardBody');
+            if (!body) return;
+            const targetTop = target.offsetTop;
+            const targetHeight = target.offsetHeight;
+            const bodyHeight = body.clientHeight;
+            const scrollTop = targetTop - (bodyHeight / 2) + (targetHeight / 2);
+            body.scrollTo({ top: Math.max(0, scrollTop), behavior: 'smooth' });
+        }
+
+        // ================================================================
+        // VALIDATION
+        // ================================================================
+        function validatePanel(step) {
+            clearFieldErrors();
+
+            if (step === 1) {
+                if (!selectedAvatarFile) {
+                    const el = markAvatarInvalid('Please upload a profile picture to continue.');
+                    showErrorBanner('Profile picture is required.');
+                    scrollToField(el);
+                    return { count: 1, firstEl: el };
+                }
+                return { count: 0, firstEl: null };
+            }
+
+            if (step === 2) {
+                const checks = [
+                    { id: 'signupName', test: () => document.getElementById('signupName').value.trim(), msg: 'Username is required.' },
+                    { id: 'signupEmail', test: () => {
+                        const v = document.getElementById('signupEmail').value.trim();
+                        if (!v) return false;
+                        if (!v.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+                            document.querySelector('[data-field="signupEmail"] .field-error span').textContent = 'Please enter a valid email address.';
+                            return false;
+                        }
+                        return true;
+                    }, msg: 'Email is required.' },
+                    { id: 'signupPassword', test: () => {
+                        const v = document.getElementById('signupPassword').value;
+                        if (!v) return false;
+                        if (v.length < 6) {
+                            document.querySelector('[data-field="signupPassword"] .field-error span').textContent = 'Password must be at least 6 characters.';
+                            return false;
+                        }
+                        return true;
+                    }, msg: 'Password is required.' },
+                    { id: 'signupBio', test: () => document.getElementById('signupBio').value.trim(), msg: 'Bio is required.' },
+                    { id: 'locationSelect', test: () => getLocationValue(), msg: 'Location is required.' },
+                    { id: 'signupBirthday', test: () => document.getElementById('signupBirthday').value, msg: 'Birthday is required.' },
+                    { id: 'signupOccupation', test: () => document.getElementById('signupOccupation').value.trim(), msg: 'Occupation is required.' },
+                    { id: 'signupInterests', test: () => document.getElementById('signupInterests').value.trim(), msg: 'Interests are required.' },
+                    { id: 'signupStatus', test: () => document.getElementById('signupStatus').value, msg: 'Status is required.' },
+                    { id: 'signupLoveLife', test: () => document.getElementById('signupLoveLife').value, msg: 'Love life status is required.' }
+                ];
+
+                let firstInvalidEl = null;
+                let errorCount = 0;
+
+                checks.forEach(check => {
+                    const ok = check.test();
+                    if (!ok) {
+                        const group = markFieldInvalid(check.id, check.msg);
+                        if (!firstInvalidEl) firstInvalidEl = group;
+                        errorCount++;
+                    }
+                });
+
+                if (errorCount > 0) {
+                    showErrorBanner(`${errorCount} field${errorCount !== 1 ? 's' : ''} need your attention. Please fix the highlighted field${errorCount !== 1 ? 's' : ''}.`);
+                    scrollToField(firstInvalidEl);
+                }
+                return { count: errorCount, firstEl: firstInvalidEl };
+            }
+
+            if (step === 3) {
+                const facebook = document.getElementById('signupFacebook').value.trim();
+                if (facebook && !facebook.match(/^https?:\/\/(www\.)?facebook\.com\/.+/i)) {
+                    const group = markFieldInvalid('signupFacebook', 'Please enter a valid Facebook URL (e.g., https://facebook.com/username).');
+                    showErrorBanner('Please enter a valid Facebook URL.');
+                    scrollToField(group);
+                    return { count: 1, firstEl: group };
+                }
+                return { count: 0, firstEl: null };
+            }
+
+            if (step === 4) {
+                return { count: 0, firstEl: null };
+            }
+
+            if (step === 5) {
+                const input = document.getElementById('signupVerification');
+                const value = input.value.trim().toUpperCase();
+                if (!value) {
+                    input.classList.add('invalid');
+                    const section = markVerificationInvalid('Please enter the squad verification code.');
+                    showErrorBanner('Please enter the squad verification code.');
+                    scrollToField(section);
+                    return { count: 1, firstEl: section };
+                }
+                if (value !== VERIFICATION_CODE) {
+                    input.classList.add('invalid');
+                    const section = markVerificationInvalid('Incorrect verification code. You are not permitted to join the squad.');
+                    showErrorBanner('Incorrect verification code.');
+                    scrollToField(section);
+                    return { count: 1, firstEl: section };
+                }
+                return { count: 0, firstEl: null };
+            }
+
+            return { count: 0, firstEl: null };
+        }
+
+        function wizardNext() {
+            if (isAnimatingPanel) return;
+            if (isThemePreviewActive) return;
+            const result = validatePanel(currentWizardStep);
+            if (result.count > 0) return;
+
+            if (currentWizardStep < WIZARD_TOTAL_STEPS) {
+                const nextStep = currentWizardStep + 1;
+                animateToPanel(nextStep, 'forward');
+                if (nextStep === 5) {
+                    setTimeout(buildReviewSummary, 350);
+                }
+                currentWizardStep = nextStep;
+                updateWizardStepIndicator();
+            }
+        }
+
+        function wizardBack() {
+            if (isAnimatingPanel) return;
+            if (isThemePreviewActive) return;
+            if (currentWizardStep <= 1) return;
+            clearFieldErrors();
+            const prevStep = currentWizardStep - 1;
+            animateToPanel(prevStep, 'backward');
+            currentWizardStep = prevStep;
+            updateWizardStepIndicator();
+        }
+
+        function buildReviewSummary() {
+            const container = document.getElementById('signupReview');
+            if (!container) return;
+
+            const name = document.getElementById('signupName').value.trim() || '—';
+            const email = document.getElementById('signupEmail').value.trim() || '—';
+            const location = getLocationValue() || '—';
+            const birthday = document.getElementById('signupBirthday').value || '—';
+            const occupation = document.getElementById('signupOccupation').value.trim() || '—';
+            const status = document.getElementById('signupStatus').value || '—';
+            const themeName = THEMES[selectedTheme.preset]?.name || 'Ocean';
+            const modeLabel = selectedTheme.mode === 'dark' ? 'Dark' : 'Light';
+
+            let avatarHtml = '<i class="fas fa-user" style="font-size:18px;color:#888;"></i>';
+            if (selectedAvatarFile) {
+                avatarHtml = `<img src="${document.getElementById('avatarPreview').src}" alt="Avatar" class="review-avatar" />`;
+            }
+
+            container.innerHTML = `
+                <h4><i class="fas fa-clipboard-check"></i> Review Your Info</h4>
+                <div class="review-row" style="align-items:center;">
+                    <span class="review-label">Photo</span>
+                    <span class="review-value">${avatarHtml}</span>
+                </div>
+                <div class="review-row">
+                    <span class="review-label">Username</span>
+                    <span class="review-value">${escapeHtml(name)}</span>
+                </div>
+                <div class="review-row">
+                    <span class="review-label">Email</span>
+                    <span class="review-value">${escapeHtml(email)}</span>
+                </div>
+                <div class="review-row">
+                    <span class="review-label">Location</span>
+                    <span class="review-value">${escapeHtml(location)}</span>
+                </div>
+                <div class="review-row">
+                    <span class="review-label">Birthday</span>
+                    <span class="review-value">${escapeHtml(birthday)}</span>
+                </div>
+                <div class="review-row">
+                    <span class="review-label">Occupation</span>
+                    <span class="review-value">${escapeHtml(occupation)}</span>
+                </div>
+                <div class="review-row">
+                    <span class="review-label">Status</span>
+                    <span class="review-value">${escapeHtml(status)}</span>
+                </div>
+                <div class="review-row">
+                    <span class="review-label">Theme</span>
+                    <span class="review-value">${themeName} · ${modeLabel}</span>
+                </div>
+            `;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = String(text);
+            return div.innerHTML;
+        }
+
+        // ================================================================
+        // THEME PICKER (PANEL 4)
+        // ================================================================
+        function renderSignupThemeGrid() {
+            const grid = document.getElementById('signupThemeGrid');
+            if (!grid) return;
+            let html = '';
+            Object.keys(THEMES).forEach(key => {
+                const theme = THEMES[key];
+                const isActive = key === selectedTheme.preset;
+                html += `
+                    <button type="button"
+                            class="theme-pick ${isActive ? 'active' : ''}"
+                            data-theme="${key}"
+                            onclick="selectSignupTheme('${key}')">
+                        <div class="theme-preview" style="background: ${theme.preview.gradient};"></div>
+                        <div class="theme-name">${theme.emoji} ${theme.name}</div>
+                    </button>
+                `;
+            });
+            grid.innerHTML = html;
+        }
+
+        function selectSignupTheme(key) {
+            if (!THEMES[key]) return;
+            selectedTheme.preset = key;
+            applyTheme(selectedTheme);
+            renderSignupThemeGrid();
+        }
+
+        function setSignupThemeMode(mode) {
+            if (mode !== 'light' && mode !== 'dark') return;
+            selectedTheme.mode = mode;
+            applyTheme(selectedTheme);
+            document.querySelectorAll('#signupModeToggle .mode-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+        }
+
+        // ================================================================
+        // VERIFICATION CODE CHECKER
+        // ================================================================
+        function checkVerificationCode() {
+            const input = document.getElementById('signupVerification');
+            const status = document.getElementById('verificationStatus');
+            const section = document.getElementById('verificationSection');
+            const value = input.value.trim().toUpperCase();
+
+            input.classList.remove('verified', 'invalid');
+            if (section) section.classList.remove('invalid');
+
+            if (!value) {
+                status.classList.remove('show', 'valid', 'invalid');
+                status.textContent = '';
+                return;
+            }
+
+            if (value === VERIFICATION_CODE) {
+                input.classList.add('verified');
+                status.classList.add('show', 'valid');
+                status.classList.remove('invalid');
+                status.innerHTML = '<i class="fas fa-check-circle"></i> Verified! You may join the squad.';
+            } else {
+                if (value.length >= VERIFICATION_CODE.length) {
+                    input.classList.add('invalid');
+                    status.classList.add('show', 'invalid');
+                    status.classList.remove('valid');
+                    status.innerHTML = '<i class="fas fa-times-circle"></i> Incorrect verification code.';
+                } else {
+                    status.classList.remove('show', 'valid', 'invalid');
+                    status.textContent = '';
+                }
+            }
+        }
+
+        // ================================================================
+        // PASSWORD VISIBILITY TOGGLE
+        // ================================================================
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // ================================================================
+        // LOCATION FUNCTIONS
+        // ================================================================
+        function toggleCustomLocation() {
+            const select = document.getElementById('locationSelect');
+            const customInput = document.getElementById('customLocationInput');
+            const customField = document.getElementById('customLocation');
+            if (select.value === 'custom') {
+                customInput.classList.add('active');
+                customField.focus();
+            } else {
+                customInput.classList.remove('active');
+                customField.value = '';
+            }
+            if (select.value) {
+                const group = document.querySelector('.input-group[data-field="locationSelect"]');
+                if (group) group.classList.remove('invalid');
+            }
+        }
+
+        function getLocationValue() {
+            const select = document.getElementById('locationSelect');
+            const customInput = document.getElementById('customLocation');
+            if (select.value === 'custom') return customInput.value.trim() || 'Others';
+            return select.value;
+        }
+
+        // ================================================================
+        // LIVE ERROR CLEARING
+        // ================================================================
+        function attachLiveErrorClearing() {
+            document.querySelectorAll('.input-group .input').forEach(input => {
+                const group = input.closest('.input-group');
+                if (!group) return;
+
+                const clearThis = () => {
+                    group.classList.remove('invalid');
+                    if (document.querySelectorAll('.input-group.invalid').length === 0 &&
+                        !document.getElementById('avatarSection')?.classList.contains('invalid') &&
+                        !document.getElementById('verificationSection')?.classList.contains('invalid')) {
+                        hideErrorBanner();
+                    }
+                };
+
+                input.addEventListener('input', clearThis);
+                input.addEventListener('change', clearThis);
+                input.addEventListener('focus', clearThis);
+            });
+
+            const verifInput = document.getElementById('signupVerification');
+            if (verifInput) {
+                verifInput.addEventListener('input', () => {
+                    const section = document.getElementById('verificationSection');
+                    if (section) section.classList.remove('invalid');
+                });
+            }
+        }
+
+        // ================================================================
+        // IMAGE COMPRESSION + UPLOAD
+        // ================================================================
+        function compressImage(file, maxSize = 400, quality = 0.7) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        if (width > maxSize || height > maxSize) {
+                            const ratio = Math.min(maxSize / width, maxSize / height);
+                            width = Math.round(width * ratio);
+                            height = Math.round(height * ratio);
+                        }
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
+                        ctx.drawImage(img, 0, 0, width, height);
+                        canvas.toBlob(function(blob) {
+                            if (!blob) return reject(new Error('Compression failed'));
+                            const compressedFile = new File([blob], 'avatar.jpg', {
+                                type: 'image/jpeg',
+                                lastModified: Date.now()
+                            });
+                            resolve(compressedFile);
+                        }, 'image/jpeg', quality);
+                    };
+                    img.onerror = reject;
+                };
+                reader.onerror = reject;
+            });
+        }
+
+        async function uploadToCloudinary(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
+            formData.append('folder', 't-imawa/profiles');
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/image/upload`);
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        const response = JSON.parse(xhr.responseText);
+                        resolve(response.secure_url);
+                    } else reject(new Error('Upload failed: ' + xhr.statusText));
+                };
+                xhr.onerror = function() { reject(new Error('Network error')); };
+                xhr.send(formData);
+            });
+        }
+
+        document.getElementById('signupPhoto').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (file.size > 10 * 1024 * 1024) {
+                alert('⚠️ Photo too large! Please choose an image under 10MB.');
+                this.value = '';
+                return;
+            }
+
+            try {
+                const compressed = await compressImage(file, 400, 0.7);
+                selectedAvatarFile = compressed;
+
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    document.getElementById('avatarPreview').src = ev.target.result;
+                    document.getElementById('avatarPreview').style.display = 'block';
+                    document.getElementById('avatarPlaceholder').style.display = 'none';
+
+                    const hint = document.getElementById('avatarHint');
+                    hint.classList.remove('required-hint');
+                    hint.classList.add('ok-hint');
+                    hint.innerHTML = '<i class="fas fa-check-circle"></i> Looking good! Profile picture selected.';
+                    const section = document.getElementById('avatarSection');
+                    if (section) section.classList.remove('invalid');
+                    hideErrorBanner();
+                };
+                reader.readAsDataURL(compressed);
+            } catch (err) {
+                console.error('Compression error:', err);
+                alert('❌ Error processing image: ' + err.message);
+            }
+        });
+
+        // ================================================================
+        // AUTH STATE
+        // ================================================================
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) return;
+            try {
+                const doc = await db.collection('users').doc(user.uid).get();
+                const data = doc.data();
+                if (data && data.theme && THEMES[data.theme.preset]) {
+                    const firestoreTheme = {
+                        preset: data.theme.preset,
+                        mode: data.theme.mode === 'dark' ? 'dark' : 'light'
+                    };
+                    applyTheme(firestoreTheme);
+                    try { localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(firestoreTheme)); } catch (e) {}
+                }
+                const isAdmin = data?.isAdmin === true;
+                setTimeout(() => {
+                    if (isAdmin) window.location.href = 'admin.html';
+                    else window.location.href = 'index.html';
+                }, 150);
+            } catch (error) {
+                console.error('Error checking user profile:', error);
+                window.location.href = 'index.html';
+            }
+        });
+
+        // ================================================================
+        // LOGIN FORM
+        // ================================================================
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('loginBtn');
+
+            if (!email || !password) {
+                showError('Please fill in all fields');
+                return;
+            }
+
+            showLoading(btn);
+            hideMessages();
+
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+            } catch (error) {
+                console.error('Login error:', error);
+                let errorMessage = error.message;
+                if (error.code === 'auth/user-not-found') {
+                    errorMessage = 'No account found with this email. Please sign up first.';
+                } else if (error.code === 'auth/wrong-password') {
+                    errorMessage = 'Incorrect password. Please try again.';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage = 'Invalid email address. Please check and try again.';
+                } else if (error.code === 'auth/too-many-requests') {
+                    errorMessage = 'Too many failed attempts. Please try again later.';
+                } else if (error.code === 'auth/invalid-credential') {
+                    errorMessage = 'Invalid email or password. Please try again.';
+                }
+                showError(errorMessage);
+                hideLoading(btn);
+            }
+        });
+
+        // ================================================================
+        // SIGNUP SUBMISSION
+        // ================================================================
+        async function submitSignup() {
+            const result = validatePanel(5);
+            if (result.count > 0) return;
+
+            const btn = document.getElementById('wizardSubmitBtn');
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> Creating account...';
+
+            const name = document.getElementById('signupName').value.trim();
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            const bio = document.getElementById('signupBio').value.trim();
+            const location = getLocationValue();
+            const birthday = document.getElementById('signupBirthday').value;
+            const occupation = document.getElementById('signupOccupation').value.trim();
+            const interests = document.getElementById('signupInterests').value.trim();
+            const status = document.getElementById('signupStatus').value;
+            const loveLife = document.getElementById('signupLoveLife').value;
+            const facebook = document.getElementById('signupFacebook').value.trim();
+            const instagram = document.getElementById('signupInstagram').value.trim();
+            const tiktok = document.getElementById('signupTiktok').value.trim();
+            const twitter = document.getElementById('signupTwitter').value.trim();
+
+            try {
+                let photoURL = '';
+                try {
+                    photoURL = await uploadToCloudinary(selectedAvatarFile);
+                } catch (uploadErr) {
+                    console.error('Avatar upload error:', uploadErr);
+                    showErrorBanner('Failed to upload profile picture: ' + uploadErr.message);
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                    return;
+                }
+
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+
+                await db.collection('users').doc(user.uid).set({
+                    displayName: name,
+                    email: email,
+                    photoURL: photoURL,
+                    bio: bio,
+                    location: location,
+                    birthday: birthday,
+                    occupation: occupation,
+                    interests: interests,
+                    status: status,
+                    loveLife: loveLife,
+                    facebook: facebook || '',
+                    instagram: instagram || '',
+                    tiktok: tiktok || '',
+                    twitter: twitter || '',
+                    isAdmin: false,
+                    theme: { preset: selectedTheme.preset, mode: selectedTheme.mode },
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                try {
+                    await user.updateProfile({ displayName: name, photoURL: photoURL });
+                } catch (authProfileErr) {
+                    console.warn('Could not update auth profile:', authProfileErr);
+                }
+
+                try { localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(selectedTheme)); } catch (e) {}
+                try {
+                    if ('BroadcastChannel' in window) {
+                        const bc = new BroadcastChannel('timawa_theme_sync');
+                        bc.postMessage({ type: 'theme-change', theme: selectedTheme });
+                        bc.close();
+                    }
+                } catch (e) {}
+
+                showSuccess('✅ Account created! Redirecting...');
+            } catch (error) {
+                console.error('Signup error:', error);
+                let errorMessage = error.message;
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage = 'This email is already registered. Please sign in instead.';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage = 'Invalid email address. Please check and try again.';
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage = 'Password is too weak. Please use at least 6 characters.';
+                }
+                showErrorBanner(errorMessage);
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
+
+        // ================================================================
+        // UI FUNCTIONS
+        // ================================================================
+        function showSignUp() {
+            document.getElementById('signupModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            currentWizardStep = 1;
+            isAnimatingPanel = false;
+            isThemePreviewActive = false;
+            document.querySelectorAll('.wizard-panel').forEach(p => {
+                p.classList.remove('active', 'slide-in-right', 'slide-in-left', 'slide-out-left', 'slide-out-right');
+            });
+            document.querySelector('.wizard-panel[data-panel="1"]').classList.add('active');
+            clearFieldErrors();
+            updateWizardStepIndicator();
+
+            renderSignupThemeGrid();
+            document.querySelectorAll('#signupModeToggle .mode-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === selectedTheme.mode);
+            });
+
+            // Ensure preview overlay is hidden
+            const overlay = document.getElementById('themePreviewOverlay');
+            if (overlay) overlay.classList.remove('active');
+        }
+
+        function closeSignUp() {
+            const modal = document.getElementById('signupModal');
+            modal.classList.remove('active');
+            modal.classList.remove('theme-preview-mode');
+            document.body.style.overflow = 'auto';
+
+            // Ensure preview overlay is hidden
+            const overlay = document.getElementById('themePreviewOverlay');
+            if (overlay) overlay.classList.remove('active');
+            isThemePreviewActive = false;
+
+            // Restore visibility in case preview was open
+            const container = document.querySelector('.container');
+            if (container) container.style.display = '';
+
+            document.getElementById('signupForm').reset();
+            selectedAvatarFile = null;
+            document.getElementById('avatarPreview').style.display = 'none';
+            document.getElementById('avatarPreview').src = '';
+            document.getElementById('avatarPlaceholder').style.display = 'block';
+            const hint = document.getElementById('avatarHint');
+            hint.classList.remove('ok-hint');
+            hint.classList.add('required-hint');
+            hint.innerHTML = '<i class="fas fa-exclamation-circle"></i> Profile picture is required';
+            document.getElementById('customLocationInput').classList.remove('active');
+
+            const verifInput = document.getElementById('signupVerification');
+            verifInput.value = '';
+            verifInput.classList.remove('verified', 'invalid');
+            const verifStatus = document.getElementById('verificationStatus');
+            verifStatus.classList.remove('show', 'valid', 'invalid');
+            verifStatus.textContent = '';
+
+            clearFieldErrors();
+        }
+
+        function showError(message) {
+            const el = document.getElementById('errorMessage');
+            el.textContent = message;
+            el.style.display = 'block';
+            document.getElementById('successMessage').style.display = 'none';
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function showSuccess(message) {
+            const el = document.getElementById('successMessage');
+            el.textContent = message;
+            el.style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        function hideMessages() {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        function showLoading(btn) {
+            btn.innerHTML = '<span class="loading-spinner"></span> Loading...';
+            btn.disabled = true;
+        }
+
+        function hideLoading(btn) {
+            btn.innerHTML = 'Sign In';
+            btn.disabled = false;
+        }
+
+        // ================================================================
+        // KEYBOARD NAVIGATION
+        // ================================================================
+        document.addEventListener('keydown', function(e) {
+            const modal = document.getElementById('signupModal');
+            if (!modal || !modal.classList.contains('active')) return;
+
+            // If theme preview is active, only allow Escape to close it
+            if (isThemePreviewActive) {
+                if (e.key === 'Escape') {
+                    closeThemePreview();
+                }
+                return;
+            }
+
+            if (e.key === 'Enter' && e.target && e.target.tagName === 'TEXTAREA') return;
+
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (currentWizardStep < WIZARD_TOTAL_STEPS) wizardNext();
+                else submitSignup();
+            } else if (e.key === 'Escape') {
+                closeSignUp();
+            } else if (e.key === 'ArrowLeft' && e.altKey) {
+                wizardBack();
+            } else if (e.key === 'ArrowRight' && e.altKey) {
+                wizardNext();
+            }
+        });
+
+        window.onclick = function(event) {
+            const signupModal = document.getElementById('signupModal');
+            const overlay = document.getElementById('themePreviewOverlay');
+            if (event.target === signupModal) {
+                closeSignUp();
+            }
+            if (event.target === overlay) {
+                closeThemePreview();
+            }
+        };
+
+        // ================================================================
+        // BOOT
+        // ================================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            attachLiveErrorClearing();
+
+            try {
+                if (sessionStorage.getItem('timawa_idle_logout') === '1') {
+                    sessionStorage.removeItem('timawa_idle_logout');
+                    const el = document.getElementById('successMessage');
+                    if (el) {
+                        el.textContent = '👋 You were signed out due to inactivity. Please sign in again.';
+                        el.style.display = 'block';
+                        setTimeout(() => { el.style.display = 'none'; }, 6000);
+                    }
+                }
+            } catch (e) { /* ignore */ }
+
+            renderSignupThemeGrid();
+        });
+    </script>
+
+    <!-- Auto-logout on idle (only activates when a user is signed in) -->
+    <script src="idle-logout.js"></script>
+</body>
+</html>
